@@ -6,17 +6,9 @@ app = FastAPI()
 
 HEADERS = {"User-Agent": "Mozilla/5.0"}
 
-# cache
-CACHE = {
-    "data": [],
-    "timestamp": 0
-}
-CACHE_TTL = 300  # 5 minutes
+CACHE = {"data": [], "timestamp": 0}
 
 
-# -------------------------------
-# SOURCE 1 (primary - may fail)
-# -------------------------------
 def fetch_nepsealpha():
     try:
         res = requests.get(
@@ -25,57 +17,30 @@ def fetch_nepsealpha():
             timeout=5
         )
         if res.status_code == 200:
-            data = res.json()
-            return data.get("data", [])
-    except Exception as e:
-        print("NepseAlpha failed:", e)
-    return None
+            return res.json().get("data", [])
+    except:
+        return None
 
 
-# -------------------------------
-# SOURCE 2 (fallback - static JSON)
-# -------------------------------
 def fetch_static():
-    try:
-        res = requests.get(
-            "https://raw.githubusercontent.com/datasets/s-and-p-500-companies/master/data/constituents.json",
-            timeout=5
-        )
-        if res.status_code == 200:
-            data = res.json()
-
-            # simulate price
-            result = []
-            for i, stock in enumerate(data[:50]):
-                result.append({
-                    "symbol": stock["Symbol"],
-                    "lastTradedPrice": 100 + i * 5
-                })
-            return result
-    except Exception as e:
-        print("Static fallback failed:", e)
-
-    return None
+    return [
+        {"symbol": "NABIL", "lastTradedPrice": 450},
+        {"symbol": "NTC", "lastTradedPrice": 800},
+        {"symbol": "NRIC", "lastTradedPrice": 1200},
+        {"symbol": "GBIME", "lastTradedPrice": 320},
+        {"symbol": "ADBL", "lastTradedPrice": 290},
+    ]
 
 
-# -------------------------------
-# MAIN LOGIC (like repo)
-# -------------------------------
 def get_data():
-    # 1. try fresh sources
-    for source in [fetch_nepsealpha, fetch_static]:
-        data = source()
-        if data:
-            CACHE["data"] = data
-            CACHE["timestamp"] = time.time()
-            return data
+    data = fetch_nepsealpha()
 
-    # 2. fallback to cache
-    if CACHE["data"]:
-        print("Using cached data")
-        return CACHE["data"]
+    if data:
+        CACHE["data"] = data
+        return data
 
-    return []
+    print("Using fallback data")
+    return fetch_static()
 
 
 @app.get("/")
