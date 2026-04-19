@@ -3,7 +3,7 @@ import requests
 
 app = FastAPI()
 
-BASE_URL = "https://nepsealpha.com/api/v1/trading-today"
+BASE_URL = "https://nepsealpha.com/api/v1/market-summary"
 
 @app.get("/")
 def home():
@@ -13,8 +13,15 @@ def home():
 def get_prices():
     try:
         res = requests.get(BASE_URL, timeout=10)
+
+        print("Status:", res.status_code)
+
         if res.status_code == 200:
-            return res.json()
+            data = res.json()
+
+            # 🔥 FIX: correct data path
+            return data.get("data", [])
+
     except Exception as e:
         return {"error": str(e)}
 
